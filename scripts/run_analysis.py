@@ -16,6 +16,7 @@ from promo_retention.data import clean_transactions, load_raw_csv
 from promo_retention.metrics import (
     cohort_matrix,
     cohort_retention,
+    cohort_retention_by_first_promo,
     monthly_kpis,
     promo_comparison,
     promo_sensitivity_summary,
@@ -26,6 +27,7 @@ from promo_retention.metrics import (
 from promo_retention.modeling import build_inactivity_snapshot, train_inactivity_risk_model
 from promo_retention.plotting import (
     save_cohort_heatmap,
+    save_cohort_heatmap_by_promo,
     save_monthly_trend,
     save_promo_comparison,
     save_promo_sensitivity_summary,
@@ -100,6 +102,22 @@ def main() -> None:
     save_promo_sensitivity_summary(
         promo_sensitivity,
         FIGURE_DIR / "promo_sensitivity_summary.png",
+    )
+
+    # --- stratified cohort: promo vs no-promo first observed order ---
+    stratified_cohorts = cohort_retention_by_first_promo(clean)
+    promo_first_matrix = cohort_matrix(stratified_cohorts["promo_first"])
+    no_promo_first_matrix = cohort_matrix(stratified_cohorts["no_promo_first"])
+    stratified_cohorts["promo_first"].to_csv(
+        OUTPUT_DIR / "cohort_retention_promo_first.csv", index=False
+    )
+    stratified_cohorts["no_promo_first"].to_csv(
+        OUTPUT_DIR / "cohort_retention_no_promo_first.csv", index=False
+    )
+    save_cohort_heatmap_by_promo(
+        promo_first_matrix,
+        no_promo_first_matrix,
+        FIGURE_DIR / "cohort_retention_by_first_promo.png",
     )
 
     if not args.skip_model:

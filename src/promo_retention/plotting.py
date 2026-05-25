@@ -55,6 +55,26 @@ def save_cohort_heatmap(matrix: pd.DataFrame, output_path: str | Path) -> None:
     plt.close(fig)
 
 
+def save_cohort_heatmap_by_promo(
+    promo_first_matrix: pd.DataFrame,
+    no_promo_first_matrix: pd.DataFrame,
+    output_path: str | Path,
+) -> None:
+    set_theme()
+    fig, axes = plt.subplots(1, 2, figsize=(18, 7))
+    for ax, matrix, title in [
+        (axes[0], promo_first_matrix, "Promo First Observed Cohort"),
+        (axes[1], no_promo_first_matrix, "No Promo First Observed Cohort"),
+    ]:
+        sns.heatmap(matrix, cmap="YlGnBu", annot=False, fmt=".0%", ax=ax)
+        ax.set_title(title)
+        ax.set_xlabel("Months Since First Purchase")
+        ax.set_ylabel("First Observed Purchase Month")
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+
+
 def save_promo_comparison(comparison: pd.DataFrame, output_path: str | Path) -> None:
     set_theme()
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))

@@ -79,6 +79,46 @@ def cohort_matrix(retention: pd.DataFrame) -> pd.DataFrame:
     return matrix
 
 
+def cohort_retention_by_first_promo(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Cohort retention stratified by promo usage on first observed purchase.
+
+    Returns a dict with keys 'promo_first' and 'no_promo_first', each
+    containing a retention dataframe suitable for cohort_matrix().
+    """
+    first_purchases = (
+        df.sort_values("purchase_date")
+        .groupby("customer_id")
+        .first()["promo_code_used"]
+        .rename("first_order_promo")
+        .reset_index()
+    )
+
+    df_tagged = df.merge(first_purchases, on="customer_id", how="left")
+    results: dict[str, pd.DataFrame] = {}
+
+    for tag, label in [(1, "promo_first"), (0, "no_promo_first")]:
+        subset = df_tagged[df_tagged["first_order_promo"] == tag]
+        if subset.empty:
+            results[label] = pd.DataFrame()
+            continue
+
+        cohort = (
+            subset.groupby(["first_observed_purchase_month", "cohort_index"])["customer_id"]
+            .nunique()
+            .reset_index(name="customers")
+        )
+        sizes = (
+            cohort[cohort["cohort_index"] == 0]
+            .set_index("first_observed_purchase_month")["customers"]
+            .rename("cohort_size")
+        )
+        cohort = cohort.join(sizes, on="first_observed_purchase_month")
+        cohort["retention_rate"] = cohort["customers"] / cohort["cohort_size"]
+        results[label] = cohort
+
+    return results
+
+
 def rfm_segments(df: pd.DataFrame) -> pd.DataFrame:
     """Create customer-level RFM scores and segment labels."""
     snapshot_date = df["purchase_date"].max() + pd.Timedelta(days=1)

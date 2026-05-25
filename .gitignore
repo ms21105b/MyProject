@@ -1,0 +1,19 @@
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
+.understand-anything/
+suggestions/
+.venv/
+*.pyc
+
+# Do not commit downloaded Kaggle raw data.
+data/raw/
+data/processed/
+*.sqlite
+
+# Generated artifacts can be reproduced.
+outputs/*.csv
+outputs/*.json
+figures/*.png
+figures/*.svg
